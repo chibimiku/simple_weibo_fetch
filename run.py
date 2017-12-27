@@ -4,6 +4,7 @@ import requests
 import shutil
 import os
 import time
+import imghdr
 
 #从cookie.txt里读取cookie
 #这个可以从chrome浏览器f12，然后在console里打document.cookie来显示当前cookie
@@ -54,7 +55,11 @@ def download_image(url, headers, path, prefix = '', suffix = ''):
         with open(save_path, 'wb') as fp:
             r.raw.decode_content = True
             shutil.copyfileobj(r.raw, fp)
-        print ("[INFO]got from " + url + ", saving to: " + save_path)
+        #判断图片格式
+        filetype = imghdr.what(save_path)
+        final_name = save_path + "." + filetype
+        os.rename(save_path, final_name)
+        print ("[INFO]got from " + url + ", saving to: " + final_name)
     else:
         print ("[ERROR]cannot get from " + url)
         
@@ -76,6 +81,10 @@ def write_log(content, error_log_name = "error.log"):
 def load_page(page):
     try:
         print ("try to get url:" + page + " ...")
+        if('//weibo.com/' in page):
+            print ("web weibo detected, try to trans to wap...")
+            page = page.replace('//weibo.com', '//m.weibo.cn')
+        
         r = requests.get(page, data={}, timeout = 15, headers=headers)
         html = r.text
         original_pic = find_between(html, '"original_pic": "', '"')
@@ -96,17 +105,22 @@ def load_page(page):
         #拼接url
         if(len(pics) > 0):
             for s_url in pics:
-                download_image(front_url + s_url , headers, final_save_dir, user_name + "_", '.jpg')
+                download_image(front_url + s_url , headers, final_save_dir, user_name + "_")
                 time.sleep(fetch_interval)
         else:
             download_image(original_pic, headers, final_save_dir, user_name + "_")
+        return True
     except Exception as e:
         print (e)
         write_log("failed to load page:" + str(page))
+        return False
 
 count = 0
+fail_count = 0
 for page in urllist:
-    load_page(page)
+    rs = load_page(page)
+    if(not rs):
+        fail_count = fail_count + 1
     count = count + 1
-print ("task done. run for " + str(count) + " page(s).")
+print ("task done. run for " + str(count) + " page(s). " + str(fail_count) + " page(s) failed. check error log.")
 
