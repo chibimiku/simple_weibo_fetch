@@ -70,7 +70,7 @@ def new_mkdirs(in_path):
 
 def write_log(content, error_log_name = "error.log"):
     my_time = time.strftime('%Y%m%d %H:%M:%S', time.localtime(time.time()))
-    wfp = open(error_log_name, 'w+', encoding="utf-8")
+    wfp = open(error_log_name, 'a+', encoding="utf-8")
     wfp.write('[' + my_time + ']' + str(content))
         
 def load_page(page):
