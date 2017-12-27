@@ -75,6 +75,7 @@ def write_log(content, error_log_name = "error.log"):
         
 def load_page(page):
     try:
+        print ("try to get url:" + page + " ...")
         r = requests.get(page, data={}, timeout = 15, headers=headers)
         html = r.text
         original_pic = find_between(html, '"original_pic": "', '"')
