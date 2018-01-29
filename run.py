@@ -5,6 +5,7 @@ import shutil
 import os
 import time
 import imghdr
+import json
 
 #从cookie.txt里读取cookie
 #这个可以从chrome浏览器f12，然后在console里打document.cookie来显示当前cookie
@@ -77,18 +78,44 @@ def write_log(content, error_log_name = "error.log"):
     my_time = time.strftime('%Y%m%d %H:%M:%S', time.localtime(time.time()))
     wfp = open(error_log_name, 'a+', encoding="utf-8")
     wfp.write('[' + my_time + ']' + str(content))
+    wfp.close()
+        
+def output_file(content, target_file):
+    wfp = open(target_file, 'w', encoding="utf-8")
+    wfp.write(content)
+    wfp.close()
+        
+def unicode_convert(in_str):
+    return in_str.encode('utf-8').decode('unicode_escape')
+        
+def get_datas_from_status(html):
+    pass
         
 def load_page(page):
     try:
         print ("try to get url:" + page + " ...")
+        write_log("[INFO]try to fetch..." + page)
         if('//weibo.com/' in page):
             print ("web weibo detected, try to trans to wap...")
-            page = page.replace('//weibo.com', '//m.weibo.cn')
+            #page = page.replace('//weibo.com', '//m.weibo.cn')
+            #对型如weibo.com/xxxxx/yyyyy的形式操作
+            rel_temp = page.split("/")
+            page = "https://m.weibo.cn/statuses/show?id=" + rel_temp[4]
+            
+        #convert from status to statuses
+        if('m.weibo.cn/status/' in page):
+            page = page.replace('status/', 'statuses/show?id=')
+        print ("final url:" + page)
         
         r = requests.get(page, data={}, timeout = 15, headers=headers)
         html = r.text
-        original_pic = find_between(html, '"original_pic": "', '"')
-        user_name = find_between(html, '"screen_name": "', '"')
+        output_file(html, 'debug.html')
+
+        original_pic = unicode_convert(find_between(html, '"original_pic":"', '"'))
+        original_pic = original_pic.replace("\/", "/")
+        user_name = unicode_convert(find_between(html, '"screen_name":"', '"'))
+        print ("got username:" + user_name)
+        
         final_save_dir = saving_path + user_name #保存位置
         #用mkdir一下新建目录，省得写入失败
         print ("use " + final_save_dir + " as target dir...")
@@ -96,10 +123,10 @@ def load_page(page):
         #print (create_rs)
 
         #解析数据
-        pic_area = find_between(html, '"pic_ids": [', ']')
+        pic_area = find_between(html, '"pic_ids":[', ']')
         #print (pic_area)
-        pics = find_betweens(pic_area, '"', '"')
-        #print (pics)
+        pics = find_betweens(pic_area, '"','"')
+        print (pics)
         front_url = 'http://' + original_pic.split("http://")[1].split("/")[0] + '/large/'
 
         #拼接url
