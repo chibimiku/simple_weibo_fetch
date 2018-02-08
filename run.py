@@ -95,6 +95,13 @@ def load_page(page):
     try:
         print ("try to get url:" + page + " ...")
         write_log("[INFO]try to fetch..." + page)
+        
+        #如果不包含show?这种形式，然后又带个?的，会自动把问号后面的参数干掉
+        if('?' in page):
+            if(not 'show?' in page):
+                split_temp = page.split("?")
+                page = split_temp[0]
+        
         if('//weibo.com/' in page):
             print ("web weibo detected, try to trans to wap...")
             #page = page.replace('//weibo.com', '//m.weibo.cn')
