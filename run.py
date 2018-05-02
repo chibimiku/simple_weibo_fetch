@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #抓取单条mobile微博上的图片
 
 import requests
@@ -6,6 +7,8 @@ import os
 import time
 import imghdr
 import json
+import io,sys
+
 
 #有效的站点类型
 good_type = ['weibo', 'bcy']
@@ -166,6 +169,9 @@ def load_weibo_page(page, saving_path, my_headers, need_save_image = True):
         write_log("failed to load page:" + str(page))
         return False
 
+def non_gbk_filter(in_str):
+    return in_str.replace("\\",'_').replace('?', '_').replace('\'', '_').replace('/', '_').replace('|', '_').replace('"', '_').replace('*', '_')
+        
 def load_bcy_page(page, saving_path, my_headers):
     my_cookie = init_cookie('bcy')
     my_headers["Cookie"] = my_cookie
@@ -174,9 +180,9 @@ def load_bcy_page(page, saving_path, my_headers):
         html = r.text
         output_file(html, 'data/debug.html')
         author_tmp = find_between(html, '<a class="_avatar', '>')
-        author_name = find_between(author_tmp, 'title="', '"')
+        author_name = non_gbk_filter(find_between(author_tmp, 'title="', '"'))
         author_uid = find_between(author_tmp, 'href="/u/', '"')
-        title = find_between(html, '<h1 class="js-post-title">', '</h1>').strip()
+        title = non_gbk_filter(find_between(html, '<h1 class="js-post-title">', '</h1>').strip())
         img_lines = find_betweens(html, "<img class='detail_std detail_clickable' src='", "' />")
         print ("found " + str(len(img_lines)) + " pic(s) in " + page + " ...")
         final_save_dir = saving_path + author_name #保存位置
@@ -186,7 +192,7 @@ def load_bcy_page(page, saving_path, my_headers):
         for img_line in img_lines:
             if('/w650' in img_line):
                 img_line = img_line.replace('/w650', '')
-            download_image(img_line, my_headers, final_save_dir, author_name + "_" + title + "_")
+            download_image(img_line, my_headers, final_save_dir, str(author_uid) + "_" + author_name + "_" + title + "_")
             time.sleep(fetch_interval)
     except Exception as e:
         print (e)
