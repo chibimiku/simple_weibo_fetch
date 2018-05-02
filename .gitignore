@@ -49,3 +49,5 @@ fetch_list.txt
 error.log
 cookie.txt
 debug.html
+data/bcy_cookies.txt
+data/weibo_cookies.txt
